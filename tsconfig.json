@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "strict": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "sourceMap": true,
+        "experimentalDecorators": true,
+        "alwaysStrict": true,
+        "noImplicitReturns": true,
+        "declaration": true,
+        "declarationDir": "./declarations",
+        "declarationMap": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
+    }
+}
