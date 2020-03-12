@@ -19,21 +19,20 @@ def copy_dir_to_container(container, src:str = None, dst:str = None, filterList 
     try:
         tarfilename = "{}_tmp_{}.tar".format(src, time.time())
         tar = tarfile.open(tarfilename, mode='w')
-        dirname = src
-        if not os.path.isdir(src):
-            dirname = os.path.dirname(src)
-        basename = os.path.basename(dst)
         try:
-            def filterFunc(item: tarfile.TarInfo):
-                if filterList is None:
+            if os.path.isdir(src):
+                def filterFunc(item: tarfile.TarInfo):
+                    if filterList is None:
+                        return item
+                    else:
+                        for filterItem in filterList:
+                            if filterItem in item.path:
+                                return None
                     return item
-                else:
-                    for filterItem in filterList:
-                        if filterItem in item.path:
-                            return None
-                return item
 
-            tar.add(dirname, arcname = basename, filter = filterFunc)
+                tar.add(src, arcname = os.path.basename(dst), filter = filterFunc)
+            else:
+                tar.add(src, arcname = os.path.basename(src))
         finally:
             tar.close()
 
@@ -61,6 +60,12 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 configList = json.load(f)
         if configList is None or type(configList) != list:
             raise Exception('container configuration is invalid')
+
+        # Prepare the image list
+        imageCache = {}
+        for img in client.images.list(all=True):
+            for t in img.tags:
+                imageCache[t] = img
 
         # Prepare the network list
         networkCache = {}
@@ -147,9 +152,12 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                         continue
                     if "source" == "" or "target" == "":
                         continue
+                    if not os.path.exists(copy["source"]):
+                        continue
                     if "filter" in copy:
                         filterList = copy["filter"]
-                    copy_dir_to_container(inst, copy["source"], copy["target"], filterList)
+                    if os.path.isdir(copy["source"]):
+                        copy_dir_to_container(inst, copy["source"], copy["target"], filterList)
 
             # Connect to desired network
             if "networkInterfaces" in config:
@@ -171,6 +179,8 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             # Commit to build an image if needed
             if "commit" in config and "image" in config["commit"] and "tag" in config["commit"]:
                 tag = "{}:{}".format(config["commit"]["image"], config["commit"]["tag"])
+                if tag in imageCache:
+                    client.images.remove(imageCache[tag].id, force=True)
                 imgInst = inst.commit()
                 imgInst.tag(tag)
                 print("new image [{}] has been built".format(tag))
