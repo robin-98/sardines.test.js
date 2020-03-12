@@ -51,17 +51,23 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                     if "network" not in interface:
                         continue
                     network = interface["network"]
-                    interfaceName = hostname
-                    if "name" in interface:
-                        interfaceName = interface["name"]
                     if network not in ipaddrCache:
                         ipaddrCache[network] = {}
-                    ipaddrCache[network][interfaceName] = {}
+                    if "hosts" not in ipaddrCache[network]:
+                        ipaddrCache[network]["hosts"] = set()
+                    ipaddrCache[network]["hosts"].add(hostname)
+                    if "interfaces" not in ipaddrCache[network]:
+                        ipaddrCache[network]["interfaces"] = {}
+
+                    interfaceName = hostname
+                    if "name" in interface and interface["name"] != "hostanme":
+                        interfaceName = interface["name"]
+
+                    ipaddrCache[network]["interfaces"][interfaceName] = {}
                     if "ipv4" in interface:
-                        ipaddrCache[network][interfaceName]["ipv4"] = interface["ipv4"]
-                    if "ipv6" in interface:
-                        ipaddrCache[network][interfaceName]["ipv6"] = interface["ipv6"]
-        print(ipaddrCache)
+                        ipaddrCache[network]["interfaces"][interfaceName] = interface["ipv4"]
+                    elif "ipv6" in interface:
+                        ipaddrCache[network]["interfaces"][interfaceName] = interface["ipv6"]
 
         # Process the container one by one
         for config in configList:
@@ -74,9 +80,14 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 command = config["commands"]
             if type(command) != list or len(command) == 0:
                 command = None
-            hostname = None
-            if "hostname" in config:
-                hostname = config["hostname"]
+            hostname = config["hostname"]
+
+            # Prepare extra_hosts
+            extraHosts = {}
+            for network in ipaddrCache:
+                if hostname in ipaddrCache[network]["hosts"]:
+                    extraHosts.update(ipaddrCache[network]["interfaces"])
+
             # Create an basic instance of the container
             if hostname in containerCache:
                 containerCache[hostname].remove(force = True)
@@ -87,7 +98,8 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 hostname = hostname,
                 name = hostname,
                 detach = True,
-                tty = True
+                tty = True,
+                extra_hosts = extraHosts
             )
             containerCache[hostname] = inst
 
