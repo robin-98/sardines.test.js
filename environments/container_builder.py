@@ -7,7 +7,7 @@ import docker
 
 client = docker.from_env()
 
-def copy_dir_to_container(container, src:str = None, dst:str = None, filterList = None):
+def copy_to_container(container, src:str = None, dst:str = None, filterList = None):
     """Copy source file in a directory to the container
     """
     print('trying to copy {} to {}:{}'.format(src, container.name, dst))
@@ -157,7 +157,7 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                     if "filter" in copy:
                         filterList = copy["filter"]
                     if os.path.isdir(copy["source"]):
-                        copy_dir_to_container(inst, copy["source"], copy["target"], filterList)
+                        copy_to_container(inst, copy["source"], copy["target"], filterList)
 
             # Connect to desired network
             if "networkInterfaces" in config:
