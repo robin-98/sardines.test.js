@@ -7,6 +7,44 @@ import docker
 
 client = docker.from_env()
 
+def copy_dir_to_container(container, src:str = None, dst:str = None, filterList = None):
+    """Copy source file in a directory to the container
+    """
+    print('trying to copy {} to {}:{}'.format(src, container.name, dst))
+    if container is None or src is None or dst is None:
+        return
+    if not os.path.exists(src):
+        raise Exception('source [{}] does not exist'.format(src))
+
+    try:
+        tarfilename = "{}_tmp_{}.tar".format(src, time.time())
+        tar = tarfile.open(tarfilename, mode='w')
+        dirname = src
+        if not os.path.isdir(src):
+            dirname = os.path.dirname(src)
+        basename = os.path.basename(dst)
+        try:
+            def filterFunc(item: tarfile.TarInfo):
+                if filterList is None:
+                    return item
+                else:
+                    for filterItem in filterList:
+                        if filterItem in item.path:
+                            return None
+                return item
+
+            tar.add(dirname, arcname = basename, filter = filterFunc)
+        finally:
+            tar.close()
+
+        data = open(tarfilename, 'rb').read()
+        container.put_archive(os.path.dirname(dst), data)
+        os.remove(tarfilename)
+        print('copy done from {} to {}:{}'.format(src, container.name, dst))
+    except Exception as e:
+        print('Error when copying source dir to the container', e)
+        raise
+
 def build_containers(containerConfFile:str = None, configuration: dict = None, baseDir: str = None):
     """Build docker container instances according to the configuration
     """
@@ -101,6 +139,17 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 extra_hosts = extraHosts
             )
             containerCache[hostname] = inst
+
+            # Copy files
+            if "copy" in config:
+                for copy in config["copy"]:
+                    if "source" not in copy or "target" not in copy:
+                        continue
+                    if "source" == "" or "target" == "":
+                        continue
+                    if "filter" in copy:
+                        filterList = copy["filter"]
+                    copy_dir_to_container(inst, copy["source"], copy["target"], filterList)
 
             # Connect to desired network
             if "networkInterfaces" in config:

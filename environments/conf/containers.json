@@ -2,13 +2,15 @@
     {
         "hostname": "nw-test-repo-1",
         "image": "nw-test-vm:20200309",
-        "copy": {
-            "source": "",
-            "target": ""
-        },
-        "commands": [
-            ""
-        ],
+        "copy": [{
+            "source": "/home/rin/Shared/sardines/sardines.shoal.js",
+            "target": "/sardines/shoal",
+            "filter": [
+                "node_modules",
+                "/lib",
+                "/tmp"
+            ]
+        }],
         "commit": {
             "image": "nw-test-repo",
             "tag": "20200310",
@@ -26,6 +28,18 @@
     {
         "hostname": "nw-test-repo-2",
         "image": "nw-test-vm:20200309",
+        "copy": [{
+            "source": "/home/rin/Shared/sardines/sardines.shoal.js",
+            "target": "/sardines/shoal",
+            "filter": [
+                "node_modules",
+                "/lib",
+                "/tmp"
+            ]
+        }],
+        "commands": [
+            ""
+        ],
         "networkInterfaces": [
             {
                 "network": "sardines",
