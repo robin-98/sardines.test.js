@@ -120,5 +120,12 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                         ipv4_address = ipv4_address
                     )
 
+            # Commit to build an image if needed
+            if "commit" in config and "image" in config["commit"] and "tag" in config["commit"]:
+                tag = "{}:{}".format(config["commit"]["image"], config["commit"]["tag"])
+                imgInst = inst.commit()
+                imgInst.tag(tag)
+                print("new image [{}] has been built".format(tag))
+
     except Exception as e:
-        print('Error when building containers:', e)
+        print('Error when building containers:', repr(e))
