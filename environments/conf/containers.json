@@ -18,7 +18,8 @@
         "networkInterfaces": [
             {
                 "network": "sardines",
-                "ipv4": "172.20.20.101"
+                "ipv4": "172.20.20.101",
+                "name": "hostname"
             }
         ]
     },

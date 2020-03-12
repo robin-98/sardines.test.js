@@ -35,6 +35,34 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
         for inst in client.containers.list(all = True):
             containerCache[inst.name] = inst
 
+        # Prepare the IP Address cache
+        # And generate temporary hostname for the container if hostname is not provided
+        ipaddrCache = {}
+        for config in configList:
+            hostname = None
+            if "hostname" in config:
+                hostname = config["hostname"]
+            else:
+                hostname = "vm"+round(time.time())
+                config["hostname"] = hostname
+
+            if "networkInterfaces" in config:
+                for interface in config["networkInterfaces"]:
+                    if "network" not in interface:
+                        continue
+                    network = interface["network"]
+                    interfaceName = hostname
+                    if "name" in interface:
+                        interfaceName = interface["name"]
+                    if network not in ipaddrCache:
+                        ipaddrCache[network] = {}
+                    ipaddrCache[network][interfaceName] = {}
+                    if "ipv4" in interface:
+                        ipaddrCache[network][interfaceName]["ipv4"] = interface["ipv4"]
+                    if "ipv6" in interface:
+                        ipaddrCache[network][interfaceName]["ipv6"] = interface["ipv6"]
+        print(ipaddrCache)
+
         # Process the container one by one
         for config in configList:
             if "image" not in config:
@@ -49,8 +77,6 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             hostname = None
             if "hostname" in config:
                 hostname = config["hostname"]
-            if hostname is None:
-                hostname = "vm"+round(time.time())
             # Create an basic instance of the container
             if hostname in containerCache:
                 containerCache[hostname].remove(force = True)
