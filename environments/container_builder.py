@@ -1,9 +1,8 @@
 # module for building containers
-
-import sys
 import json
 import os
 import time
+import tarfile
 import docker
 
 client = docker.from_env()
