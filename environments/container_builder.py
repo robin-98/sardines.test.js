@@ -54,13 +54,14 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             # Create an basic instance of the container
             if hostname in containerCache:
                 containerCache[hostname].remove(force = True)
-
-            inst = client.containers.create(
+            # Keep the container running in background
+            inst = client.containers.run(
                 image,
                 command = command,
                 hostname = hostname,
                 name = hostname,
-                detach = True
+                detach = True,
+                tty = True
             )
             containerCache[hostname] = inst
 
@@ -73,8 +74,9 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                     if networkName not in networkCache:
                         continue
                     ipv4_address = None
-                    if "ipv4" in config:
-                        ipv4_address = config["ipv4"]
+                    if "ipv4" in interface:
+                        ipv4_address = interface["ipv4"]
+                    print("container [{}] ip adress [{}] is on".format(hostname, ipv4_address))
                     networkCache[networkName].connect(
                         inst.id, 
                         ipv4_address = ipv4_address
