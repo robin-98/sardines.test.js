@@ -1,0 +1,65 @@
+[
+    {
+        "hostname": "nw-test-repo-1",
+        "image": "nw-test-vm:20200309",
+        "copy": {
+            "source": "",
+            "target": ""
+        },
+        "commands": [
+            ""
+        ],
+        "commit": {
+            "image": "nw-test-repo",
+            "tag": "20200310",
+            "entrypoint": "",
+            "cmd": ""
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.101"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-repo-2",
+        "image": "nw-test-vm:20200309",
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.102"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-client-1",
+        "image": "nw-test-vm:20200309",
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.111"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-client-2",
+        "image": "nw-test-vm:20200309",
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.112"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-client-3",
+        "image": "nw-test-vm:20200309",
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.113"
+            }
+        ]
+    }
+]

@@ -1,0 +1,7 @@
+{
+    "nw-test-vm": {
+        "20200309": {
+            "dockerfile": "./dockerfile-vm.docker"
+        }
+    }
+}
