@@ -11,11 +11,17 @@
                 "/tmp"
             ]
         }],
+        "commands": {
+            "workdir": "/sardines/shoal",
+            "environment": {},
+            "command_list": [
+                "npm install",
+                "npm run build"
+            ]
+        },
         "commit": {
             "image": "nw-test-repo",
-            "tag": "20200310",
-            "entrypoint": "",
-            "cmd": ""
+            "tag": "20200310"
         },
         "networkInterfaces": [
             {
@@ -37,9 +43,14 @@
                 "/tmp"
             ]
         }],
-        "commands": [
-            ""
-        ],
+        "commands": {
+            "workdir": "/sardines/shoal",
+            "environment": {},
+            "command_list": [
+                "npm install",
+                "npm run build"
+            ]
+        },
         "networkInterfaces": [
             {
                 "network": "sardines",
@@ -74,6 +85,26 @@
             {
                 "network": "sardines",
                 "ipv4": "172.20.20.113"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-redis-1",
+        "image": "redis:latest",
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.121"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-postgres-1",
+        "image": "postgres:latest",
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.122"
             }
         ]
     }

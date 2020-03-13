@@ -117,11 +117,6 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 continue
             # Prepare parameters for docker container run command
             image = config["image"]
-            command = None
-            if "command" in config:
-                command = config["commands"]
-            if type(command) != list or len(command) == 0:
-                command = None
             hostname = config["hostname"]
 
             # Prepare extra_hosts
@@ -136,7 +131,6 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             # Keep the container running in background
             inst = client.containers.run(
                 image,
-                command = command,
                 hostname = hostname,
                 name = hostname,
                 detach = True,
@@ -175,6 +169,16 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                         inst.id, 
                         ipv4_address = ipv4_address
                     )
+
+            # exec commands
+            commandList = None
+            if "commands" in config:
+                commandList = config["commands"]
+            if type(commandList) != list or len(commandList) == 0:
+                commandList = None
+            if commandList is not None:
+                for command in commandList:
+                    
 
             # Commit to build an image if needed
             if "commit" in config and "image" in config["commit"] and "tag" in config["commit"]:

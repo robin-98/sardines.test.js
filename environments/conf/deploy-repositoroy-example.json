@@ -1,6 +1,6 @@
 {
     "host": {
-        "name": "mba-robin"
+        "name": "nw-test-repo-1"
     },
     "providers": [{
         "name": "sardines-service-provider-http",
@@ -24,7 +24,7 @@
             "syslog": true,
             "public": {
                 "protocol": "http",
-                "host": "localhost",
+                "host": "nw-test-repo-1",
                 "root": "/",
                 "port": 8080,
                 "driver": "sardines-service-driver-http"
@@ -76,7 +76,7 @@
                 "db": {
                     "type": "postgres",
                     "settings": {
-                        "host": "localhost",
+                        "host": "nw-test-postgres-1",
                         "port": 5432,
                         "database": "sardines_test",
                         "schema": "shoal",
