@@ -4,6 +4,7 @@ import os
 import time
 import tarfile
 import docker
+import sys
 
 client = docker.from_env()
 
@@ -129,6 +130,7 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             if hostname in containerCache:
                 containerCache[hostname].remove(force = True)
             # Keep the container running in background
+            print("building container {} from image {}...".format(hostname, image))
             inst = client.containers.run(
                 image,
                 hostname = hostname,
@@ -171,14 +173,37 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                     )
 
             # exec commands
-            commandList = None
+
             if "commands" in config:
-                commandList = config["commands"]
-            if type(commandList) != list or len(commandList) == 0:
+                commands = config["commands"]
                 commandList = None
-            if commandList is not None:
-                for command in commandList:
-                    
+                if "cmd" in commands:
+                    commandList = commands["cmd"]
+                if commandList is not None \
+                    and type(commandList) == list \
+                    and len(commandList) > 0:
+                    workdir = "/"
+                    if "workdir" in commands:
+                        workdir = commands["workdir"]
+                    environment = {}
+                    if "environment" in commands:
+                        environment = commands["environment"]
+                    for cmd in commandList:
+                        print("[{}:{}/{}] command execution started...".format(hostname, workdir, cmd))
+                        (exit_code, output) = inst.exec_run(
+                            cmd,
+                            workdir = workdir,
+                            environment = environment,
+                            stream=False
+                        )
+                        print(output.decode("utf8"))
+                        # for line in output:
+                        #     print(line.decode("utf8"))
+                        print("[{}:{}/{}] command execution finished with exit code: {}\n".format(hostname, workdir, cmd, exit_code))
+                        if exit_code > 0:
+                            print("building process of container {} failed".format(hostname))
+                            sys.exit(exit_code)
+
 
             # Commit to build an image if needed
             if "commit" in config and "image" in config["commit"] and "tag" in config["commit"]:
@@ -188,6 +213,8 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 imgInst = inst.commit()
                 imgInst.tag(tag)
                 print("new image [{}] has been built".format(tag))
+            print("container {} has been built from image {}\n".format(hostname, image))
 
     except Exception as e:
         print('Error when building containers:', repr(e))
+        raise

@@ -14,7 +14,7 @@
         "commands": {
             "workdir": "/sardines/shoal",
             "environment": {},
-            "command_list": [
+            "cmd": [
                 "npm install",
                 "npm run build"
             ]
@@ -46,7 +46,7 @@
         "commands": {
             "workdir": "/sardines/shoal",
             "environment": {},
-            "command_list": [
+            "cmd": [
                 "npm install",
                 "npm run build"
             ]
