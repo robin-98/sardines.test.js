@@ -8,8 +8,11 @@ import sys
 
 client = docker.from_env()
 
-def copy_to_container(container, src:str = None, dst:str = None, filterList = None):
+def copy_to_container(container, src:str = None, dst:str = None, filterList = None, user: str = "root", group: str = "root", mode:str = None):
     """Copy source file in a directory to the container
+
+    parameter:
+        mode: a string such as "700", "422", "777", "600", "400", which is used to 'chmod' command
     """
     print('trying to copy {} to {}:{}'.format(src, container.name, dst))
     if container is None or src is None or dst is None:
@@ -33,13 +36,21 @@ def copy_to_container(container, src:str = None, dst:str = None, filterList = No
 
                 tar.add(src, arcname = os.path.basename(dst), filter = filterFunc)
             else:
-                tar.add(src, arcname = os.path.basename(src))
+                tar.add(src, arcname = os.path.basename(dst))
         finally:
             tar.close()
 
         data = open(tarfilename, 'rb').read()
         container.put_archive(os.path.dirname(dst), data)
         os.remove(tarfilename)
+
+        container.exec_run(
+            'chown -R {}:{} {}'.format(user, group, dst)
+        )
+        if mode is not None:
+            container.exec_run(
+                'chmod -R {} {}'.format(mode, dst)
+            )
         print('copy done from {} to {}:{}'.format(src, container.name, dst))
     except Exception as e:
         print('Error when copying source dir to the container', e)
@@ -61,12 +72,21 @@ def setup_ssh(container)-> str:
             stream=False
         )
         if exit_code == 0:
-            return output.decode("utf8")
+            sshkey = output.decode("utf8")
+            (exit_code, output) = container.exec_run(
+                "service ssh start",
+                stream = False
+            )
+            if exit_code == 0:
+                return sshkey
+            else:
+                print(output.decode("utf8"))
+                raise Exception('failed to start ssh service on the container')
         else:
-            print(output)
+            print(output.decode("utf8"))
             raise Exception('failed to get ssh key for the container')
     else:
-        print(output)
+        print(output.decode("utf8"))
         raise Exception('failed to setup ssh for the container')
 
 
@@ -131,7 +151,7 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                         ipaddrCache[network]["interfaces"] = {}
 
                     interfaceName = hostname
-                    if "name" in interface and interface["name"] != "hostanme":
+                    if "name" in interface and interface["name"] != "hostname":
                         interfaceName = interface["name"]
 
                     ipaddrCache[network]["interfaces"][interfaceName] = {}
@@ -154,6 +174,11 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 if hostname in ipaddrCache[network]["hosts"]:
                     extraHosts.update(ipaddrCache[network]["interfaces"])
 
+            # Ports to expose
+            ports = {}
+            if "ports" in config and type(config["ports"]) == dict:
+                ports = config["ports"]
+
             # Create an basic instance of the container
             if hostname in containerCache:
                 containerCache[hostname].remove(force = True)
@@ -165,7 +190,8 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 name = hostname,
                 detach = True,
                 tty = True,
-                extra_hosts = extraHosts
+                extra_hosts = extraHosts,
+                ports = ports
             )
             containerCache[hostname] = inst
 
@@ -237,7 +263,45 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                             print("building process of container {} failed".format(hostname))
                             sys.exit(exit_code)
 
+            # normal operations have been done                            
+            print("container {} has been built from image {}\n".format(hostname, image))
 
+
+        # Prepare the host keys
+        tmpHostkeyFile = "./tmp-hostkeys.txt"
+        for host in sshkeyCache:
+            inst = containerCache[host]
+            # scan host keys
+            (exit_code, output) = inst.exec_run(
+                "ssh-keyscan -H {}".format(host),
+                stream = False
+            )
+            if exit_code == 0:
+                with open(tmpHostkeyFile, 'a') as f:
+                    f.write(output.decode("utf8"))
+            else:
+                print('failed to scan host key for container {}'.format(host))
+
+        # spread ssh trust
+        tmpSshkeyFile = "./tmp-sshkeys.txt"
+        for hostX in sshkeyCache:
+            inst = containerCache[hostX]
+            lines = []
+            for hostY in sshkeyCache:
+                if hostX != hostY:
+                    lines.append(sshkeyCache[hostY])
+            with open(tmpSshkeyFile, 'w') as f:
+                f.writelines(lines)
+            copy_to_container(inst, tmpSshkeyFile, '/root/.ssh/authorized_keys')
+            copy_to_container(inst, tmpHostkeyFile, '/root/.ssh/known_hosts')
+        os.remove(tmpSshkeyFile)
+        os.remove(tmpHostkeyFile)
+
+        print("")
+        # Commit and build images if needed
+        for config in configList:
+            hostname = config["hostname"]
+            inst = containerCache[hostname]
             # Commit to build an image if needed
             if "commit" in config and "image" in config["commit"] and "tag" in config["commit"]:
                 tag = "{}:{}".format(config["commit"]["image"], config["commit"]["tag"])
@@ -246,10 +310,8 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 imgInst = inst.commit()
                 imgInst.tag(tag)
                 print("new image [{}] has been built".format(tag))
-            print("container {} has been built from image {}\n".format(hostname, image))
+        print("everything is done")
 
-        print('ssh keys:')
-        print(sshkeyCache)
     except Exception as e:
         print('Error when building containers:', repr(e))
         raise

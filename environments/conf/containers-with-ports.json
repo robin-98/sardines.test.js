@@ -1,0 +1,147 @@
+[
+    {
+        "hostname": "nw-test-repo-1",
+        "image": "nw-test-vm:20200314",
+        "copy": [{
+            "source": "/home/rin/Shared/sardines/sardines.shoal.js",
+            "target": "/sardines/shoal",
+            "filter": [
+                "node_modules",
+                "/lib",
+                "/tmp"
+            ]
+        }],
+        "ssh": true,
+        "commands": {
+            "workdir": "/sardines/shoal",
+            "environment": {},
+            "cmd": [
+                "npm install",
+                "npm run build"
+            ]
+        },
+        "commit": {
+            "image": "nw-test-repo",
+            "tag": "20200310"
+        },
+        "ports": {
+            "8080/tcp": "8080",
+            "8081/tcp": "8081",
+            "22/tcp": "22"
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.101",
+                "name": "hostname"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-repo-2",
+        "image": "nw-test-vm:20200314",
+        "copy": [{
+            "source": "/home/rin/Shared/sardines/sardines.shoal.js",
+            "target": "/sardines/shoal",
+            "filter": [
+                "node_modules",
+                "/lib",
+                "/tmp"
+            ]
+        }],
+        "ssh": true,
+        "commands": {
+            "workdir": "/sardines/shoal",
+            "environment": {},
+            "cmd": [
+                "npm install",
+                "npm run build"
+            ]
+        },
+        "ports": {
+            "8080/tcp": "8080",
+            "8081/tcp": "8081",
+            "22/tcp": "22"
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.102"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-client-1",
+        "image": "nw-test-vm:20200314",
+        "ssh": true,
+        "ports": {
+            "8080/tcp": "8080",
+            "8081/tcp": "8081",
+            "22/tcp": "22"
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.111"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-client-2",
+        "image": "nw-test-vm:20200314",
+        "ssh": true,
+        "ports": {
+            "8080/tcp": "8080",
+            "8081/tcp": "8081",
+            "22/tcp": "22"
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.112"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-client-3",
+        "image": "nw-test-vm:20200314",
+        "ssh": true,
+        "ports": {
+            "8080/tcp": "8080",
+            "8081/tcp": "8081",
+            "22/tcp": "22"
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.113"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-redis-1",
+        "image": "redis:latest",
+        "ports": {
+            "6379/tcp": "6379"
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.121"
+            }
+        ]
+    },
+    {
+        "hostname": "nw-test-postgres-1",
+        "image": "postgres:latest",
+        "ports": {
+            "5432/tcp": "5432"
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.122"
+            }
+        ]
+    }
+]
