@@ -266,36 +266,38 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             # normal operations have been done                            
             print("container {} has been built from image {}\n".format(hostname, image))
 
+        if len(sshkeyCache.keys()) > 0:
+            print("setting up ssh trust relationships")
+            # Prepare the host keys
+            tmpHostkeyFile = "./tmp-hostkeys.txt"
+            for host in sshkeyCache:
+                inst = containerCache[host]
+                # scan host keys
+                (exit_code, output) = inst.exec_run(
+                    "ssh-keyscan -H {}".format(host),
+                    stream = False
+                )
+                if exit_code == 0:
+                    with open(tmpHostkeyFile, 'a') as f:
+                        f.write(output.decode("utf8"))
+                else:
+                    print('failed to scan host key for container {}'.format(host))
 
-        # Prepare the host keys
-        tmpHostkeyFile = "./tmp-hostkeys.txt"
-        for host in sshkeyCache:
-            inst = containerCache[host]
-            # scan host keys
-            (exit_code, output) = inst.exec_run(
-                "ssh-keyscan -H {}".format(host),
-                stream = False
-            )
-            if exit_code == 0:
-                with open(tmpHostkeyFile, 'a') as f:
-                    f.write(output.decode("utf8"))
-            else:
-                print('failed to scan host key for container {}'.format(host))
-
-        # spread ssh trust
-        tmpSshkeyFile = "./tmp-sshkeys.txt"
-        for hostX in sshkeyCache:
-            inst = containerCache[hostX]
-            lines = []
-            for hostY in sshkeyCache:
-                if hostX != hostY:
-                    lines.append(sshkeyCache[hostY])
-            with open(tmpSshkeyFile, 'w') as f:
-                f.writelines(lines)
-            copy_to_container(inst, tmpSshkeyFile, '/root/.ssh/authorized_keys')
-            copy_to_container(inst, tmpHostkeyFile, '/root/.ssh/known_hosts')
-        os.remove(tmpSshkeyFile)
-        os.remove(tmpHostkeyFile)
+            # spread ssh trust
+            tmpSshkeyFile = "./tmp-sshkeys.txt"
+            for hostX in sshkeyCache:
+                inst = containerCache[hostX]
+                lines = []
+                for hostY in sshkeyCache:
+                    if hostX != hostY:
+                        lines.append(sshkeyCache[hostY])
+                with open(tmpSshkeyFile, 'w') as f:
+                    f.writelines(lines)
+                copy_to_container(inst, tmpSshkeyFile, '/root/.ssh/authorized_keys')
+                copy_to_container(inst, tmpHostkeyFile, '/root/.ssh/known_hosts')
+            os.remove(tmpSshkeyFile)
+            os.remove(tmpHostkeyFile)
+            print("ssh trust relationships have been setup")
 
         print("")
         # Commit and build images if needed
