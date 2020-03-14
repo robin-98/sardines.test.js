@@ -45,6 +45,31 @@ def copy_to_container(container, src:str = None, dst:str = None, filterList = No
         print('Error when copying source dir to the container', e)
         raise
 
+def setup_ssh(container)-> str:
+    """Setup ssh for the container instance, and return the public key
+    """
+    if container is None:
+        return ""
+
+    (exit_code, output) = container.exec_run(
+        "ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa",
+        stream=False
+    )
+    if exit_code == 0:
+        (exit_code, output) = container.exec_run(
+            "cat /root/.ssh/id_rsa.pub",
+            stream=False
+        )
+        if exit_code == 0:
+            return output.decode("utf8")
+        else:
+            print(output)
+            raise Exception('failed to get ssh key for the container')
+    else:
+        print(output)
+        raise Exception('failed to setup ssh for the container')
+
+
 def build_containers(containerConfFile:str = None, configuration: dict = None, baseDir: str = None):
     """Build docker container instances according to the configuration
     """
@@ -77,6 +102,9 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
         containerCache = {}
         for inst in client.containers.list(all = True):
             containerCache[inst.name] = inst
+
+        # Prepare the ssh key cache
+        sshkeyCache = {}
 
         # Prepare the IP Address cache
         # And generate temporary hostname for the container if hostname is not provided
@@ -172,8 +200,13 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                         ipv4_address = ipv4_address
                     )
 
-            # exec commands
+            # setup ssh
+            if "ssh" in config and config["ssh"] == True:
+                sshkey = setup_ssh(inst)
+                sshkeyCache[hostname] = sshkey
+                print("container [{}] ssh has been setup".format(hostname))
 
+            # exec commands
             if "commands" in config:
                 commands = config["commands"]
                 commandList = None
@@ -215,6 +248,8 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 print("new image [{}] has been built".format(tag))
             print("container {} has been built from image {}\n".format(hostname, image))
 
+        print('ssh keys:')
+        print(sshkeyCache)
     except Exception as e:
         print('Error when building containers:', repr(e))
         raise

@@ -1,7 +1,7 @@
 [
     {
         "hostname": "nw-test-repo-1",
-        "image": "nw-test-vm:20200309",
+        "image": "nw-test-vm:20200314",
         "copy": [{
             "source": "/home/rin/Shared/sardines/sardines.shoal.js",
             "target": "/sardines/shoal",
@@ -11,6 +11,7 @@
                 "/tmp"
             ]
         }],
+        "ssh": true,
         "commands": {
             "workdir": "/sardines/shoal",
             "environment": {},
@@ -33,7 +34,7 @@
     },
     {
         "hostname": "nw-test-repo-2",
-        "image": "nw-test-vm:20200309",
+        "image": "nw-test-vm:20200314",
         "copy": [{
             "source": "/home/rin/Shared/sardines/sardines.shoal.js",
             "target": "/sardines/shoal",
@@ -43,6 +44,7 @@
                 "/tmp"
             ]
         }],
+        "ssh": true,
         "commands": {
             "workdir": "/sardines/shoal",
             "environment": {},
@@ -60,7 +62,8 @@
     },
     {
         "hostname": "nw-test-client-1",
-        "image": "nw-test-vm:20200309",
+        "image": "nw-test-vm:20200314",
+        "ssh": true,
         "networkInterfaces": [
             {
                 "network": "sardines",
@@ -70,7 +73,8 @@
     },
     {
         "hostname": "nw-test-client-2",
-        "image": "nw-test-vm:20200309",
+        "image": "nw-test-vm:20200314",
+        "ssh": true,
         "networkInterfaces": [
             {
                 "network": "sardines",
@@ -80,7 +84,8 @@
     },
     {
         "hostname": "nw-test-client-3",
-        "image": "nw-test-vm:20200309",
+        "image": "nw-test-vm:20200314",
+        "ssh": true,
         "networkInterfaces": [
             {
                 "network": "sardines",

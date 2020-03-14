@@ -50,7 +50,8 @@ def build_images(imgConfFile:str = None, configuration: dict = None, baseDir: st
                 tag = '{}:{}'.format(imgName, imgTag)
                 if tag not in localImageTags:
                     with open(dockerfile, 'rb') as df:
-                        client.images.build(fileobj = df, tag = tag)
+                        (imgInst, log) = client.images.build(fileobj = df, tag = tag)
+                    print(log)
                     print('docker image [{}] has been built'.format(tag))
     except Exception as e:
         print('Error when building image:', e)
