@@ -20,8 +20,8 @@ def copy_to_container(container, src:str = None, dst:str = None, filterList = No
     if not os.path.exists(src):
         raise Exception('source [{}] does not exist'.format(src))
 
+    tarfilename = "{}_tmp_{}.tar".format(src, time.time())
     try:
-        tarfilename = "{}_tmp_{}.tar".format(src, time.time())
         tar = tarfile.open(tarfilename, mode='w')
         try:
             if os.path.isdir(src):
@@ -55,6 +55,9 @@ def copy_to_container(container, src:str = None, dst:str = None, filterList = No
     except Exception as e:
         print('Error when copying source dir to the container', e)
         raise
+    finally:
+        if os.path.exists(tarfilename):
+            os.remove(tarfilename)
 
 def setup_ssh(container)-> str:
     """Setup ssh for the container instance, and return the public key
@@ -182,6 +185,10 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             # Create an basic instance of the container
             if hostname in containerCache:
                 containerCache[hostname].remove(force = True)
+            # Envrionment variables
+            environment = {}
+            if "environment" in config:
+                environment = config["environment"]
             # Keep the container running in background
             print("building container {} from image {}...".format(hostname, image))
             inst = client.containers.run(
@@ -191,7 +198,8 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 detach = True,
                 tty = True,
                 extra_hosts = extraHosts,
-                ports = ports
+                ports = ports,
+                environment = environment
             )
             containerCache[hostname] = inst
 

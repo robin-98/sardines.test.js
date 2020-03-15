@@ -33,34 +33,6 @@
         ]
     },
     {
-        "hostname": "nw-test-repo-2",
-        "image": "nw-test-vm:20200314",
-        "copy": [{
-            "source": "/home/rin/Shared/sardines/sardines.shoal.js",
-            "target": "/sardines/shoal",
-            "filter": [
-                "node_modules",
-                "/lib",
-                "/tmp"
-            ]
-        }],
-        "ssh": true,
-        "commands": {
-            "workdir": "/sardines/shoal",
-            "environment": {},
-            "cmd": [
-                "npm install",
-                "npm run build"
-            ]
-        },
-        "networkInterfaces": [
-            {
-                "network": "sardines",
-                "ipv4": "172.20.20.102"
-            }
-        ]
-    },
-    {
         "hostname": "nw-test-client-1",
         "image": "nw-test-vm:20200314",
         "ssh": true,
@@ -69,7 +41,11 @@
                 "network": "sardines",
                 "ipv4": "172.20.20.111"
             }
-        ]
+        ],
+        "commit": {
+            "image": "nw-test-client",
+            "tag": "20200314"
+        }
     },
     {
         "hostname": "nw-test-client-2",
@@ -105,7 +81,10 @@
     },
     {
         "hostname": "nw-test-postgres-1",
-        "image": "postgres:latest",
+        "image": "nw-test-postgres:20200315",
+        "environment": {
+            "POSTGRES_PASSWORD": "Sardines$Test@2020"
+        },
         "networkInterfaces": [
             {
                 "network": "sardines",

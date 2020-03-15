@@ -1,0 +1,10 @@
+FROM postgres:latest
+
+MAINTAINER robin@naturewake.com
+
+WORKDIR /sardines
+
+
+RUN apt-get update; \
+    apt-get install -y python3 python3-pip
+

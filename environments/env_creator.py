@@ -7,6 +7,8 @@ import json
 import os
 import docker
 from container_builder import build_containers
+from db_builder import create_postgres_databases
+
 client = docker.from_env()
 
 def build_images(imgConfFile:str = None, configuration: dict = None, baseDir: str = None):
@@ -110,6 +112,8 @@ if __name__ == "__main__":
     argParser.add_argument('--create-networks', type=str, required=False, help='Create a custom network according to a configuration file, which in JSON format with all network settings')
     argParser.add_argument('--build-containers', type=str, required=False,
         help='Build container instances according to a configuration file, which in JSON format with all container settings')
+    argParser.add_argument('--create-postgres-db', type=str, required=False,
+        help='Build databases in container instances according to a configuration file, which in JSON format with all container settings')
     args = argParser.parse_args()
 
     if args.build_images is not None:
@@ -120,3 +124,6 @@ if __name__ == "__main__":
 
     if args.build_containers is not None:
         build_containers(args.build_containers)
+
+    if args.create_postgres_db is not None:
+        create_postgres_databases(args.create_postgres_db)

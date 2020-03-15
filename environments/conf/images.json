@@ -3,5 +3,10 @@
         "20200314": {
             "dockerfile": "./dockerfile-vm.docker"
         }
+    },
+    "nw-test-postgres": {
+        "20200315": {
+            "dockerfile": "./dockerfile-postgres.docker"
+        }
     }
 }
