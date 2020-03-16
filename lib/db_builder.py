@@ -5,14 +5,14 @@ import time
 import tarfile
 import docker
 import sys
-from container_builder import copy_to_container
+from lib.container_builder import copy_to_container
 
 client = docker.from_env()
 
 def create_postgres_databases(confFilePath:str = None, configuration: dict = None):
     configList = configuration
     execDir = os.path.dirname(sys.argv[0])
-    dbScriptFile = "{}/create_postgres_database.py".format(execDir)
+    dbScriptFile = "{}/lib/create_postgres_database.py".format(execDir)
     if not os.path.exists(dbScriptFile):
         raise Exception("Can not locate the script file for creating databases")
 
