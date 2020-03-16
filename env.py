@@ -11,13 +11,13 @@ from lib.network_builder import create_networks
 if __name__ == "__main__":
 
     argParser = argparse.ArgumentParser(description='create en envrionment for testing')
-    argParser.add_argument('--env', type=str, required=False, help='env tag, such as dev, prod, test, ..., if the env already created before and saved under the env name, then the env configuration file will be directly used to create the desired envrionment')
     argParser.add_argument('--build-images', type=str, required=False, help='Build image according to configuration file, which in JSON format with dockerfile addresses')
     argParser.add_argument('--create-networks', type=str, required=False, help='Create a custom network according to a configuration file, which in JSON format with all network settings')
     argParser.add_argument('--build-containers', type=str, required=False,
         help='Build container instances according to a configuration file, which in JSON format with all container settings')
     argParser.add_argument('--create-postgres-db', type=str, required=False,
         help='Build databases in container instances according to a configuration file, which in JSON format with all container settings')
+    argParser.add_argument('--hosts', type=str, required=False, help="target host list, seperated by ','")
     args = argParser.parse_args()
 
     if args.build_images is not None:
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         create_networks(args.create_networks)
 
     if args.build_containers is not None:
-        build_containers(args.build_containers)
+        build_containers(args.build_containers, hosts = args.hosts)
 
     if args.create_postgres_db is not None:
         create_postgres_databases(args.create_postgres_db)

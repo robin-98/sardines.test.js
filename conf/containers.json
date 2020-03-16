@@ -1,14 +1,12 @@
 [
     {
         "hostname": "nw-test-repo-1",
-        "image": "nw-test-vm:20200314",
+        "image": "nw-test-vm:20200316",
         "copy": [{
             "source": "/home/rin/Shared/sardines/sardines.shoal.js",
             "target": "/sardines/shoal",
             "filter": [
-                "node_modules",
-                "/lib",
-                "/tmp"
+                "node_modules"
             ]
         }],
         "ssh": true,
@@ -22,7 +20,10 @@
         },
         "commit": {
             "image": "nw-test-repo",
-            "tag": "20200310"
+            "tag": "20200316"
+        },
+        "ports": {
+            "8080/tcp": 8080
         },
         "networkInterfaces": [
             {
@@ -34,7 +35,7 @@
     },
     {
         "hostname": "nw-test-client-1",
-        "image": "nw-test-vm:20200314",
+        "image": "nw-test-vm:20200316",
         "ssh": true,
         "networkInterfaces": [
             {
@@ -44,12 +45,12 @@
         ],
         "commit": {
             "image": "nw-test-client",
-            "tag": "20200314"
+            "tag": "20200316"
         }
     },
     {
         "hostname": "nw-test-client-2",
-        "image": "nw-test-vm:20200314",
+        "image": "nw-test-vm:20200316",
         "ssh": true,
         "networkInterfaces": [
             {
@@ -60,7 +61,7 @@
     },
     {
         "hostname": "nw-test-client-3",
-        "image": "nw-test-vm:20200314",
+        "image": "nw-test-vm:20200316",
         "ssh": true,
         "networkInterfaces": [
             {
@@ -72,6 +73,9 @@
     {
         "hostname": "nw-test-redis-1",
         "image": "redis:latest",
+        "ports": {
+            "6379/tcp": 6379
+        },
         "networkInterfaces": [
             {
                 "network": "sardines",
@@ -84,6 +88,9 @@
         "image": "nw-test-postgres:20200315",
         "environment": {
             "POSTGRES_PASSWORD": "Sardines$Test@2020"
+        },
+        "ports": {
+            "5432/tcp": 5432
         },
         "networkInterfaces": [
             {

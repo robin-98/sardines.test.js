@@ -93,7 +93,7 @@ def setup_ssh(container)-> str:
         raise Exception('failed to setup ssh for the container')
 
 
-def build_containers(containerConfFile:str = None, configuration: dict = None, baseDir: str = None):
+def build_containers(containerConfFile:str = None, configuration: dict = None, baseDir: str = None, hosts: str = None):
     """Build docker container instances according to the configuration
     """
     configBaseDir = baseDir
@@ -132,6 +132,9 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
         # Prepare the IP Address cache
         # And generate temporary hostname for the container if hostname is not provided
         ipaddrCache = {}
+        hostFilter = None
+        if hosts is not None and type(hosts) == str:
+            hostFilter = hosts.split(',')
         for config in configList:
             hostname = None
             if "hostname" in config:
@@ -170,6 +173,9 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             # Prepare parameters for docker container run command
             image = config["image"]
             hostname = config["hostname"]
+
+            if hostFilter is not None and hostname not in hostFilter:
+                continue
 
             # Prepare extra_hosts
             extraHosts = {}
@@ -274,7 +280,19 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             # normal operations have been done                            
             print("container {} has been built from image {}\n".format(hostname, image))
 
-        if len(sshkeyCache.keys()) > 0:
+        # build or rebuild ssh trust relationships
+        shouldBuildSsh = True
+        if len(sshkeyCache.keys()) > 0 and hostFilter is not None and len(hostFilter) > 0:
+            shouldBuildSsh = False
+            for x in sshkeyCache:
+                for y in hostFilter:
+                    if x == y:
+                        shouldBuildSsh = True
+                        break
+                if shouldBuildSsh:
+                    break
+
+        if len(sshkeyCache.keys()) > 0 and shouldBuildSsh:
             print("setting up ssh trust relationships")
             # Prepare the host keys
             tmpHostkeyFile = "./tmp-hostkeys.txt"
@@ -311,6 +329,8 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
         # Commit and build images if needed
         for config in configList:
             hostname = config["hostname"]
+            if hostFilter is not None and hostname not in hostFilter:
+                continue
             inst = containerCache[hostname]
             # Commit to build an image if needed
             if "commit" in config and "image" in config["commit"] and "tag" in config["commit"]:
