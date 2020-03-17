@@ -1,0 +1,12 @@
+{
+    "type": "postgres",
+    "settings": {
+        "POSTGRES_PASSWORD": "Sardines$Test@2020",
+        "host": "nw-test-postgres-1",
+        "port": 5432,
+        "database": "rd_test",
+        "schema": "rd",
+        "user": "rd",
+        "password": "Sardines2020"
+    }
+}
