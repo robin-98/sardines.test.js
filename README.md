@@ -181,7 +181,17 @@
 
     + ### Test Engine
 
+* ## How to test
 
+    + ### all in one: `./orch.py`
+
+    + ### setup environment: `./orch.py --level sardines`
+
+    + ### step by step to setup environment:
+        
+        - setup infrastructure only: `./orch.py --level infrastructure`
+
+        - setup sardines only: `./orch.py --level sardines --skip-level infrastructure`
 
 
 

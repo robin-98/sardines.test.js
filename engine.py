@@ -8,11 +8,12 @@ import time
 from lib.container_builder import copy_to_container
 
 client = docker.from_env()
-containerCache = {}
-for inst in client.containers.list():
-    containerCache[inst.name] = inst
 
 def deploy_repository(hostname: str = None, deployPlanFile: str = None, workdir:str = '/sardines/shoal'):
+    containerCache = {}
+    for inst in client.containers.list():
+        containerCache[inst.name] = inst
+
     try:
         if hostname is None or hostname not in containerCache:
             raise Exception('target container {} does not exist'.format(hostanme))
@@ -37,6 +38,10 @@ def deploy_repository(hostname: str = None, deployPlanFile: str = None, workdir:
         raise e
 
 def deploy_agent(agentHost: str = None, repoHost: str = None, workdir: str = "/sardines/shoal"):
+    containerCache = {}
+    for inst in client.containers.list():
+        containerCache[inst.name] = inst
+    
     try:
         if agentHost is None or agentHost not in containerCache:
             raise Exception("invalid agent host {}".format(agentHost))

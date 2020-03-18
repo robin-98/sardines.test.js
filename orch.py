@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from lib.network_builder import create_networks
 from lib.image_builder import build_images
-from lib.container_builder import copy_to_container
 from lib.container_builder import build_containers
 from lib.db_builder import create_postgres_databases
 from engine import deploy_repository
@@ -64,7 +63,7 @@ if __name__ == '__main__':
     import argparse
     argParser = argparse.ArgumentParser(description='orchestrate a test')
     argParser.add_argument(
-        '--env-level',
+        '--level',
         type=str,
         required=False,
         default='sardines',
@@ -126,8 +125,9 @@ if __name__ == '__main__':
         help='repository hosts, seperated by ",", '
     )
     args = argParser.parse_args()
+    beginTime = time.time()
     setupEnv(
-        args.env_level,
+        args.level,
         args.skip_level,
         args.config_networks,
         args.config_images,
@@ -137,4 +137,6 @@ if __name__ == '__main__':
         args.repo_hosts.split(","),
         args.agent_hosts.split(",")
     )
+    endTime = time.time()
+    print("Job done in {} seconds".format(round(endTime - beginTime, 1)))
 
