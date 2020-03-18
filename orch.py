@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-from lib.network_builder import create_networks
-from lib.image_builder import build_images
-from lib.container_builder import build_containers
-from lib.db_builder import create_postgres_databases
-from engine import deploy_repository
-from engine import deploy_agent
+from env.lib.network_builder import create_networks
+from env.lib.image_builder import build_images
+from env.lib.container_builder import build_containers
+from env.lib.db_builder import create_postgres_databases
+from env.sardines import deploy_repository
+from env.sardines import deploy_agent
 import time
 
 EnvLevels = ["infrastructure", "sardines", "services"]
@@ -79,35 +79,35 @@ if __name__ == '__main__':
         '--config-networks',
         type=str,
         required=False,
-        default="./conf/networks.json",
+        default="./conf/env/networks.json",
         help='networks configuration file'
     )
     argParser.add_argument(
         '--config-images',
         type=str,
         required=False,
-        default="./conf/images.json",
+        default="./conf/env/images.json",
         help='images configuration file'
     )
     argParser.add_argument(
         '--config-containers',
         type=str,
         required=False,
-        default="./conf/containers.json",
+        default="./conf/env/containers.json",
         help='containers configuration file'
     )
     argParser.add_argument(
         '--config-db',
         type=str,
         required=False,
-        default="./conf/db-postgres-test.json,./conf/db-postgres-dev.json",
+        default="./conf/env/db-postgres-test.json,./conf/env/db-postgres-dev.json",
         help='database configuration files, seperated by ","'
     )
     argParser.add_argument(
         '--config-repo',
         type=str,
         required=False,
-        default="./conf/deploy-repository-1.json",
+        default="./conf/env/deploy-repository-1.json",
         help='repository deploy plan files, seperated by ","'
     )
     argParser.add_argument(

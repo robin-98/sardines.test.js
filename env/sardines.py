@@ -5,7 +5,7 @@ import os
 import json
 import sys
 import time
-from lib.container_builder import copy_to_container
+from env.lib.container_builder import copy_to_container
 
 client = docker.from_env()
 
