@@ -93,7 +93,13 @@ def setup_ssh(container)-> str:
         raise Exception('failed to setup ssh for the container')
 
 
-def build_containers(containerConfFile:str = None, configuration: dict = None, baseDir: str = None, hosts: str = None):
+def build_containers(
+    containerConfFile:str = None, 
+    configuration: dict = None, 
+    baseDir: str = None, 
+    hosts: str = None,
+    ignoreCmdErr: bool = False
+):
     """Build docker container instances according to the configuration
     """
     configBaseDir = baseDir
@@ -166,7 +172,7 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                     elif "ipv6" in interface:
                         ipaddrCache[network]["interfaces"][interfaceName] = interface["ipv6"]
 
-        # Process the container one by one
+        # Build the container one by one
         for config in configList:
             if "image" not in config:
                 continue
@@ -195,6 +201,13 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
             environment = {}
             if "environment" in config:
                 environment = config["environment"]
+            # Volumes
+            volumes = {}
+            if "volumes" in config:
+                for key in config["volumes"]:
+                    v = config["volumes"][key]
+                    if type(v) == dict and "bind" in v and "mode" in v:
+                        volumes[key] = v
             # Keep the container running in background
             print("building container {} from image {}...".format(hostname, image))
             inst = client.containers.run(
@@ -205,7 +218,8 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                 tty = True,
                 extra_hosts = extraHosts,
                 ports = ports,
-                environment = environment
+                environment = environment,
+                volumes = volumes
             )
             containerCache[hostname] = inst
 
@@ -262,18 +276,22 @@ def build_containers(containerConfFile:str = None, configuration: dict = None, b
                     if "environment" in commands:
                         environment = commands["environment"]
                     for cmd in commandList:
-                        print("[{}:{}/{}] command execution started...".format(hostname, workdir, cmd))
+                        cmdStart = time.time()
+                        print("[{}:{}/{}] command execution started at <{}>...".format(hostname, workdir, cmd, time.ctime()))
                         (exit_code, output) = inst.exec_run(
                             cmd,
                             workdir = workdir,
                             environment = environment,
-                            stream=False
+                            stream = ignoreCmdErr
                         )
-                        print(output.decode("utf8"))
-                        # for line in output:
-                        #     print(line.decode("utf8"))
-                        print("[{}:{}/{}] command execution finished with exit code: {}\n".format(hostname, workdir, cmd, exit_code))
-                        if exit_code > 0:
+                        if not ignoreCmdErr:
+                            print(output.decode("utf8"))
+                        else:
+                            for line in output:
+                                print(line.decode("utf8"))
+                        cmdEnd = time.time()
+                        print("[{}:{}/{}] command execution finished in {} seconds with exit code: {}\n".format(hostname, workdir, cmd, round(cmdEnd - cmdStart, 1), exit_code))
+                        if not ignoreCmdErr and exit_code > 0:
                             print("building process of container {} failed".format(hostname))
                             sys.exit(exit_code)
 

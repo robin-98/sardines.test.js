@@ -87,7 +87,14 @@
         "hostname": "nw-test-postgres-1",
         "image": "nw-test-postgres:20200315",
         "environment": {
-            "POSTGRES_PASSWORD": "Sardines$Test@2020"
+            "POSTGRES_PASSWORD": "Sardines$Test@2020",
+            "PGDATA": "/data"
+        },
+        "volumes": {
+            "/home/rin/databases/pg": {
+                "bind": "/data",
+                "mode": "rw"
+            }
         },
         "ports": {
             "5432/tcp": 5432

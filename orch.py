@@ -18,7 +18,8 @@ def setupEnv(
     dbConfFileList: list = None,
     repoDeployFileList: list = None,
     repoHostList: list = None,
-    agentHostList: list = None
+    agentHostList: list = None,
+    ignoreCmdErr: bool = False
 ):
     """Only setup the environment for the future tests
     """
@@ -40,17 +41,17 @@ def setupEnv(
             print('networks have been created')
             build_images(imageConfFile)
             print('images have been built')
-            build_containers(containerConfFile)
+            build_containers(containerConfFile, ignoreCmdErr = ignoreCmdErr)
             for dbConfFile in dbConfFileList:
                 create_postgres_databases(dbConfFile)
             print('test envrionment has been set at [{}] level'.format(EnvLevels[step]))
         elif step == 1:
             print('begin to deploy repositories')
             for i in range(min(len(repoDeployFileList), len(repoHostList))):
-                deploy_repository(repoHostList[i], repoDeployFileList[i])
+                deploy_repository(repoHostList[i], repoDeployFileList[i], ignoreCmdErr = ignoreCmdErr)
             print('begin to deploy agents')
             for i in range(len(agentHostList)):
-                deploy_agent(agentHostList[i], repoHostList[0])
+                deploy_agent(agentHostList[i], repoHostList[0], ignoreCmdErr = ignoreCmdErr)
             print('test envrionment has been set at [{}] level'.format(EnvLevels[step]))
             pass
         elif step == 2:
@@ -124,7 +125,15 @@ if __name__ == '__main__':
         default="nw-test-client-1,nw-test-client-2,nw-test-client-3",
         help='repository hosts, seperated by ",", '
     )
+    argParser.add_argument(
+        '--ignoreCmdErr',
+        type=bool,
+        required=False,
+        default=False,
+        help="stop custom commands if an error occure, it's useful to turn off when debugging those commands"
+    )
     args = argParser.parse_args()
+
     beginTime = time.time()
     setupEnv(
         args.level,
@@ -135,7 +144,8 @@ if __name__ == '__main__':
         args.config_db.split(","),
         args.config_repo.split(","),
         args.repo_hosts.split(","),
-        args.agent_hosts.split(",")
+        args.agent_hosts.split(","),
+        args.ignoreCmdErr
     )
     endTime = time.time()
     print("Job done in {} seconds".format(round(endTime - beginTime, 1)))

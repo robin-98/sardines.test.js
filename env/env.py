@@ -18,6 +18,7 @@ if __name__ == "__main__":
     argParser.add_argument('--create-postgres-db', type=str, required=False,
         help='Build databases in container instances according to a configuration file, which in JSON format with all container settings')
     argParser.add_argument('--hosts', type=str, required=False, help="target host list, seperated by ','")
+    argParser.add_argument('--ignoreCmdErr', type=bool, required=False, default=True, help="if set false, stop custom commands if an error occure")
     args = argParser.parse_args()
 
     if args.build_images is not None:
@@ -27,7 +28,7 @@ if __name__ == "__main__":
         create_networks(args.create_networks)
 
     if args.build_containers is not None:
-        build_containers(args.build_containers, hosts = args.hosts)
+        build_containers(args.build_containers, hosts = args.hosts, ignoreCmdErr = args.ignoreCmdErr)
 
     if args.create_postgres_db is not None:
         create_postgres_databases(args.create_postgres_db)
