@@ -5,7 +5,10 @@ import time
 import tarfile
 import docker
 import sys
-from env.lib.container_builder import copy_to_container
+if __name__ == "lib.db_builder":
+    from lib.container_builder import copy_to_container
+else:
+    from env.lib.container_builder import copy_to_container
 
 client = docker.from_env()
 
