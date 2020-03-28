@@ -1,7 +1,7 @@
 [
     {
         "hostname": "nw-test-repo-1",
-        "image": "nw-test-vm:20200316",
+        "image": "nw-test-vm:20200328",
         "copy": [{
             "source": "/home/rin/Shared/sardines/sardines.shoal.js",
             "target": "/sardines/shoal",
@@ -20,7 +20,7 @@
         },
         "commit": {
             "image": "nw-test-repo",
-            "tag": "20200316"
+            "tag": "20200328"
         },
         "ports": {
             "8080/tcp": 8080
@@ -35,7 +35,7 @@
     },
     {
         "hostname": "nw-test-client-1",
-        "image": "nw-test-vm:20200316",
+        "image": "nw-test-vm:20200328",
         "ssh": true,
         "networkInterfaces": [
             {
@@ -45,12 +45,12 @@
         ],
         "commit": {
             "image": "nw-test-client",
-            "tag": "20200316"
+            "tag": "20200328"
         }
     },
     {
         "hostname": "nw-test-client-2",
-        "image": "nw-test-vm:20200316",
+        "image": "nw-test-vm:20200328",
         "ssh": true,
         "networkInterfaces": [
             {
@@ -61,7 +61,7 @@
     },
     {
         "hostname": "nw-test-client-3",
-        "image": "nw-test-vm:20200316",
+        "image": "nw-test-vm:20200328",
         "ssh": true,
         "networkInterfaces": [
             {
