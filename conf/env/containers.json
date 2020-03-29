@@ -105,5 +105,32 @@
                 "ipv4": "172.20.20.122"
             }
         ]
+    },
+    {
+        "hostname": "nw-test-gitlab",
+        "image": "gitlab/gitlab-ce:latest",
+        "volumes": {
+            "/home/rin/databases/gitlab/config": {
+                "bind": "/etc/gitlab",
+                "mode": "rw"
+            },
+            "/home/rin/databases/gitlab/data": {
+                "bind": "/var/log/gitlab",
+                "mode": "rw"
+            },
+            "/home/rin/databases/gitlab/logs": {
+                "bind": "/var/opt/gitlab",
+                "mode": "rw"
+            }
+        },
+        "ports": {
+            "80/tcp": 80
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.131"
+            }
+        ]
     }
 ]
