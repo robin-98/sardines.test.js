@@ -6,9 +6,9 @@ import tarfile
 import docker
 import sys
 if __name__ == "lib.db_builder":
-    from lib.container_builder import copy_to_container
+    from lib.utils import copy_to_container
 else:
-    from env.lib.container_builder import copy_to_container
+    from env.lib.utils import copy_to_container
 
 client = docker.from_env()
 

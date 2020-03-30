@@ -2,102 +2,24 @@
 import json
 import os
 import time
-import tarfile
 import docker
 import sys
+if __name__ == "lib.container_builder":
+    from lib.utils import setup_ssh
+    from lib.utils import copy_to_container
+    from lib.utils import build_ssh_trust_relationships
+else:
+    from env.lib.utils import setup_ssh
+    from env.lib.utils import copy_to_container
+    from env.lib.utils import build_ssh_trust_relationships
 
 client = docker.from_env()
-
-def copy_to_container(container, src:str = None, dst:str = None, filterList = None, user: str = "root", group: str = "root", mode:str = None):
-    """Copy source file in a directory to the container
-
-    parameter:
-        mode: a string such as "700", "422", "777", "600", "400", which is used to 'chmod' command
-    """
-    print('trying to copy {} to {}:{}'.format(src, container.name, dst))
-    if container is None or src is None or dst is None:
-        return
-    if not os.path.exists(src):
-        raise Exception('source [{}] does not exist'.format(src))
-
-    tarfilename = "{}_tmp_{}.tar".format(src, time.time())
-    try:
-        tar = tarfile.open(tarfilename, mode='w')
-        try:
-            if os.path.isdir(src):
-                def filterFunc(item: tarfile.TarInfo):
-                    if filterList is None:
-                        return item
-                    else:
-                        for filterItem in filterList:
-                            if filterItem in item.path:
-                                return None
-                    return item
-
-                tar.add(src, arcname = os.path.basename(dst), filter = filterFunc)
-            else:
-                tar.add(src, arcname = os.path.basename(dst))
-        finally:
-            tar.close()
-
-        data = open(tarfilename, 'rb').read()
-        container.put_archive(os.path.dirname(dst), data)
-        os.remove(tarfilename)
-
-        container.exec_run(
-            'chown -R {}:{} {}'.format(user, group, dst)
-        )
-        if mode is not None:
-            container.exec_run(
-                'chmod -R {} {}'.format(mode, dst)
-            )
-        print('copy done from {} to {}:{}'.format(src, container.name, dst))
-    except Exception as e:
-        print('Error when copying source dir to the container', e)
-        raise
-    finally:
-        if os.path.exists(tarfilename):
-            os.remove(tarfilename)
-
-def setup_ssh(container)-> str:
-    """Setup ssh for the container instance, and return the public key
-    """
-    if container is None:
-        return ""
-
-    (exit_code, output) = container.exec_run(
-        "ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa",
-        stream=False
-    )
-    if exit_code == 0:
-        (exit_code, output) = container.exec_run(
-            "cat /root/.ssh/id_rsa.pub",
-            stream=False
-        )
-        if exit_code == 0:
-            sshkey = output.decode("utf8")
-            (exit_code, output) = container.exec_run(
-                "service ssh start",
-                stream = False
-            )
-            if exit_code == 0:
-                return sshkey
-            else:
-                print(output.decode("utf8"))
-                raise Exception('failed to start ssh service on the container')
-        else:
-            print(output.decode("utf8"))
-            raise Exception('failed to get ssh key for the container')
-    else:
-        print(output.decode("utf8"))
-        raise Exception('failed to setup ssh for the container')
-
 
 def build_containers(
     containerConfFile:str = None, 
     configuration: dict = None, 
     baseDir: str = None, 
-    hosts: str = None,
+    hosts: [] = None,
     ignoreCmdErr: bool = False
 ):
     """Build docker container instances according to the configuration
@@ -139,8 +61,8 @@ def build_containers(
         # And generate temporary hostname for the container if hostname is not provided
         ipaddrCache = {}
         hostFilter = None
-        if hosts is not None and type(hosts) == str:
-            hostFilter = hosts.split(',')
+        if hosts is not None and type(hosts) == list:
+            hostFilter = hosts
         for config in configList:
             hostname = None
             if "hostname" in config:
@@ -299,49 +221,7 @@ def build_containers(
             print("container {} has been built from image {}\n".format(hostname, image))
 
         # build or rebuild ssh trust relationships
-        shouldBuildSsh = True
-        if len(sshkeyCache.keys()) > 0 and hostFilter is not None and len(hostFilter) > 0:
-            shouldBuildSsh = False
-            for x in sshkeyCache:
-                for y in hostFilter:
-                    if x == y:
-                        shouldBuildSsh = True
-                        break
-                if shouldBuildSsh:
-                    break
-
-        if len(sshkeyCache.keys()) > 0 and shouldBuildSsh:
-            print("setting up ssh trust relationships")
-            # Prepare the host keys
-            tmpHostkeyFile = "./tmp-hostkeys.txt"
-            for host in sshkeyCache:
-                inst = containerCache[host]
-                # scan host keys
-                (exit_code, output) = inst.exec_run(
-                    "ssh-keyscan -H {}".format(host),
-                    stream = False
-                )
-                if exit_code == 0:
-                    with open(tmpHostkeyFile, 'a') as f:
-                        f.write(output.decode("utf8"))
-                else:
-                    print('failed to scan host key for container {}'.format(host))
-
-            # spread ssh trust
-            tmpSshkeyFile = "./tmp-sshkeys.txt"
-            for hostX in sshkeyCache:
-                inst = containerCache[hostX]
-                lines = []
-                for hostY in sshkeyCache:
-                    if hostX != hostY:
-                        lines.append(sshkeyCache[hostY])
-                with open(tmpSshkeyFile, 'w') as f:
-                    f.writelines(lines)
-                copy_to_container(inst, tmpSshkeyFile, '/root/.ssh/authorized_keys')
-                copy_to_container(inst, tmpHostkeyFile, '/root/.ssh/known_hosts')
-            os.remove(tmpSshkeyFile)
-            os.remove(tmpHostkeyFile)
-            print("ssh trust relationships have been setup")
+        build_ssh_trust_relationships(configList, hostFilter, sshkeyCache, containerCache)
 
         print("")
         # Commit and build images if needed
