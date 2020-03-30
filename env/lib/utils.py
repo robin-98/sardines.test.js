@@ -182,3 +182,66 @@ def build_ssh_trust_relationships(configList:list = None,  hosts:list = None, ss
         os.remove(tmpSshkeyFile)
         os.remove(tmpHostkeyFile)
         print("ssh trust relationships have been setup")
+
+def get_existing_env_variables(container)->dict:
+    if container is None:
+        return []
+
+    (exit_code, output) = container.exec_run('env')
+    if exit_code != 0:
+        print(output.decode('utf8'))
+        raise Exception('Error when getting env from container [{}]'.format(container.name))
+    else:
+        variables = list(filter(lambda x: x!='', output.decode('utf8').split('\n')))
+        result = {}
+        for v in variables:
+            x = v.split('=')
+            result[x[0]] = x[1]
+        return result
+
+def exec_cmd(hostname:str = None, cmd: str = None, workdir: str = "/sardines/shoal", ignoreCmdErr: bool = False, environment: list = []):
+    if not hostname or not cmd:
+        return
+
+    try:
+        inst = client.containers.get(hostname)
+        if not inst:
+            raise Exception('Can not find container instance [{}]'.format(hostname))
+        # Prepare environment variables
+        env = []
+        PATH = ""
+        for var in environment:
+            x = var.split('=')
+            if x[0] == 'PATH':
+                if PATH == "":
+                    PATH = x[1]
+                else:
+                    PATH += ':' + x[1]
+            else:
+                env.append(var)
+        if PATH != "":
+            existingEnv = get_existing_env_variables(inst)
+            if "PATH" not in existingEnv:
+                env.append('PATH={}'.format(PATH))
+            else:
+                env.append('PATH={}:{}'.format(existingEnv['PATH'], PATH))
+        # Execute the command
+        (exit_code, output) = inst.exec_run(
+            cmd,
+            workdir = workdir,
+            stream = ignoreCmdErr,
+            environment = env
+        )
+        if not ignoreCmdErr:
+            print(output.decode("utf8"))    
+            if exit_code != 0:
+                errMsg = "Error when excuting cmd [{}] on container instance [{}], exit code: {}".format(
+                    cmd, hostname, exit_code
+                )
+                raise Exception(errMsg)
+        else:
+            for line in output:
+                print(line.decode("utf8"))
+    except Exception as e:
+        print('Error while executing command [{}] on container [{}]: {}'.format(cmd, hostname, e))
+        raise e

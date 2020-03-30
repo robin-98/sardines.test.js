@@ -6,9 +6,11 @@ import json
 import sys
 import time
 if __name__ == "__main__":
-    from lib.container_builder import copy_to_container
+    from lib.utils import copy_to_container
+    from lib.utils import exec_cmd
 else:
-    from env.lib.container_builder import copy_to_container
+    from env.lib.utils import copy_to_container
+    from env.lib.utils import exec_cmd
 
 client = docker.from_env()
 
@@ -96,34 +98,6 @@ def deploy_agent(agentHost: str = None, repoHost: str = None, workdir: str = "/s
         print('Error while deploying agent on container {}'.format(agentHost), e)
         raise e
 
-def exec_cmd(hostname:str = None, cmd: str = None, workdir: str = "/sardines/shoal", ignoreCmdErr: bool = False, environment: list = []):
-    if not hostname or not cmd:
-        return
-
-    try:
-        inst = client.containers.get(hostname)
-        if not inst:
-            raise Exception('Can not find container instance [{}]'.format(hostname))
-        (exit_code, output) = inst.exec_run(
-            cmd,
-            workdir = workdir,
-            stream = ignoreCmdErr,
-            environment = environment
-        )
-        if not ignoreCmdErr:
-            print(output.decode("utf8"))    
-            if exit_code != 0:
-                errMsg = "Error when excuting cmd [{}] on container instance [{}], exit code: {}".format(
-                    cmd, hostname, exit_code
-                )
-                raise Exception(errMsg)
-        else:
-            for line in output:
-                print(line.decode("utf8"))
-    except Exception as e:
-        print('Error while executing command [{}] on container [{}]: {}'.format(cmd, hostname, e))
-        raise e
-
 # Executed from command line
 if __name__ == "__main__":
     import argparse
@@ -171,7 +145,7 @@ if __name__ == "__main__":
         action = 'append',
         type=str,
         required=False,
-        help="environment variable, such as 'PATH=/home/$USER/bin:$PATH'"
+        help="environment variable. Such as 'PATH=/usr/bin', this will append this line of PATH to existing PATH variable. For other variables, the value will be set directly no matter whether already exists or not"
     )
     argParser.add_argument(
         "--ignoreCmdErr",
