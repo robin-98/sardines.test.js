@@ -14,3 +14,10 @@
 
 # Deploy repository
 ./env/sardines.py --action deploy-repo --repo-deploy-plan ./conf/env/deploy-repository-1.json --repo-host nw-test-repo-1
+
+
+# Re-build nginx container
+./env/env.py --build-containers ./conf/env/containers.json --hosts nw-test-nginx-1
+
+# Deploy agent on nginx
+./env/sardines.py --action deploy-agents --repo-deploy-plan ./conf/env/deploy-repository-1.json --repo-host nw-test-repo-1 --hosts nw-test-nginx-1

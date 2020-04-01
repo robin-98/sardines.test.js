@@ -174,5 +174,8 @@ if __name__ == "__main__":
             for host in args.hosts:
                 exec_cmd(host, args.cmd, workdir = args.workdir, ignoreCmdErr = args.ignoreCmdErr, environment = args.env)
             print("Command [{}] has been executed on host [{}]".format(args.cmd, args.hosts))
+    else:
+        print('action [{}] is not supported'.format(args.action))
+        sys.exit(1)
 
 

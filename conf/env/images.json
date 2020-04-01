@@ -8,5 +8,10 @@
         "20200315": {
             "dockerfile": "./dockerfile-postgres.docker"
         }
+    },
+    "nw-test-nginx": {
+        "20200331": {
+            "dockerfile": "./dockerfile-nginx.docker"
+        }
     }
 }

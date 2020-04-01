@@ -107,6 +107,27 @@
         ]
     },
     {
+        "hostname": "nw-test-nginx-1",
+        "image": "nw-test-nginx:20200331",
+        "ssh": true,
+        "ports": {
+            "80/tcp": 8888
+        },
+        "commands": {
+            "workdir": "/sardines",
+            "environment": {},
+            "cmd": [
+                "service nginx start"
+            ]
+        },
+        "networkInterfaces": [
+            {
+                "network": "sardines",
+                "ipv4": "172.20.20.131"
+            }
+        ]
+    },
+    {
         "hostname": "nw-test-gitlab",
         "image": "gitlab/gitlab-ce:latest",
         "volumes": {
@@ -129,7 +150,7 @@
         "networkInterfaces": [
             {
                 "network": "sardines",
-                "ipv4": "172.20.20.131"
+                "ipv4": "172.20.20.141"
             }
         ]
     }

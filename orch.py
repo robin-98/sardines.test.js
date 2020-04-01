@@ -5,6 +5,7 @@ from env.lib.container_builder import build_containers
 from env.lib.db_builder import create_postgres_databases
 from env.sardines import deploy_repository
 from env.sardines import deploy_agent
+from env.lib.utils import exec_cmd
 import time
 
 EnvLevels = ["infrastructure", "sardines", "services"]
@@ -55,7 +56,20 @@ def setupEnv(
             print('test envrionment has been set at [{}] level'.format(EnvLevels[step]))
             pass
         elif step == 2:
-            pass
+            print('begin to deploy services')
+            if skipIndex < 1:
+                print('waiting the deployment of agents for 60 more seconds')
+                time.sleep(60)
+
+            for host in args.agent_hosts:
+                cmd = "deploy_service.py --repo-deploy-plan deploy-repository.json --hosts root@{} --application dietitian --tags test {}".format(host, host)
+                exec_cmd(
+                    args.repo_hosts[0], 
+                    cmd, 
+                    ignoreCmdErr = args.ignoreCmdErr, 
+                    environment = ['PATH=./node_modules/.bin', 'PATH=./bin']
+                )
+            print('test envrionment has been set at [{}] level'.format(EnvLevels[step]))
         else:
             pass
 
@@ -67,7 +81,7 @@ if __name__ == '__main__':
         '--level',
         type=str,
         required=False,
-        default='sardines',
+        default='services',
         help='set the test envrionment level: {}'.format(str.join(', ', EnvLevels))
     )
     argParser.add_argument(
@@ -99,31 +113,35 @@ if __name__ == '__main__':
     )
     argParser.add_argument(
         '--config-db',
+        nargs="+",
         type=str,
         required=False,
-        default="./conf/env/db-postgres-test.json,./conf/env/db-postgres-dev.json",
-        help='database configuration files, seperated by ","'
+        default=["./conf/env/db-postgres-test.json", "./conf/env/db-postgres-dev.json"],
+        help='database configuration files, seperated by space'
     )
     argParser.add_argument(
         '--config-repo',
+        nargs="+",
         type=str,
         required=False,
-        default="./conf/env/deploy-repository-1.json",
-        help='repository deploy plan files, seperated by ","'
+        default=["./conf/env/deploy-repository-1.json"],
+        help='repository deploy plan files, seperated by space'
     )
     argParser.add_argument(
         '--repo-hosts',
+        nargs="+",
         type=str,
         required=False,
-        default="nw-test-repo-1",
-        help='repository hosts, seperated by ",", '
+        default=["nw-test-repo-1"],
+        help='repository hosts, seperated by space'
     )
     argParser.add_argument(
         '--agent-hosts',
+        nargs="+",
         type=str,
         required=False,
-        default="nw-test-client-1,nw-test-client-2,nw-test-client-3",
-        help='repository hosts, seperated by ",", '
+        default=["nw-test-client-1", "nw-test-client-2", "nw-test-client-3", "nw-test-nginx-1"],
+        help='repository hosts, seperated by space'
     )
     argParser.add_argument(
         '--ignoreCmdErr',
@@ -141,10 +159,10 @@ if __name__ == '__main__':
         args.config_networks,
         args.config_images,
         args.config_containers,
-        args.config_db.split(","),
-        args.config_repo.split(","),
-        args.repo_hosts.split(","),
-        args.agent_hosts.split(","),
+        args.config_db,
+        args.config_repo,
+        args.repo_hosts,
+        args.agent_hosts,
         args.ignoreCmdErr
     )
     endTime = time.time()
