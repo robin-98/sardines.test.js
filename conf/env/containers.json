@@ -120,6 +120,12 @@
                 "service nginx start"
             ]
         },
+        "volumes": {
+            "/home/rin/databases/nginx": {
+                "bind": "/logs",
+                "mode": "rw"
+            }
+        },
         "networkInterfaces": [
             {
                 "network": "sardines",
