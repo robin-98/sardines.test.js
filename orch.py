@@ -62,7 +62,12 @@ def setupEnv(
                 time.sleep(60)
 
             for host in args.agent_hosts:
-                cmd = "deploy_service.py --repo-deploy-plan deploy-repository.json --hosts root@{} --application dietitian --tags test {}".format(host, host)
+                cmd = ''
+                if 'agent' in host:
+                    cmd = "deploy_service.py --repo-deploy-plan deploy-repository.json --hosts root@{} --application dietitian --tags test {}".format(host, host)
+                elif 'nginx' in host:
+                    cmd = "deploy_service.py --repo-deploy-plan deploy-repository.json --hosts root@{} --application sardines-built-in-services --services /access_point/nginx:* --tags test {}".format(host, host)
+
                 exec_cmd(
                     args.repo_hosts[0], 
                     cmd, 
