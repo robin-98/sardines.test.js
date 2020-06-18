@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#
+# Example of deploy service:
+# ./sardines.py --action deploy-services --repo-host nw-test-repo-1 --repo-deploy-plan deploy-repository.json --hosts nw-test-nginx-1 --application sardines-built-in-services --services /access_point/nginx:setup --init-parameters ./sample_initParams/nginx_setup.json --tags test nginx
+#
 
 import docker
 import os
@@ -98,6 +102,58 @@ def deploy_agent(agentHost: str = None, repoHost: str = None, workdir: str = "/s
         print('Error while deploying agent on container {}'.format(agentHost), e)
         raise e
 
+def deploy_service(
+    repoDeployPlanFilePath: str = 'deploy-repository.json',
+    repoHost: str = None,
+    targetHosts: list = None,
+    application: str = None,
+    services: list = None,
+    tags: list = None,
+    providerSettingsFile:str = None,
+    initParamFile: str = None,
+    ignoreCmdErr: bool = False,
+    workdir: str = '/sardines/shoal',
+    env: list = None,
+    ):
+
+    containerCache = {}
+    for inst in client.containers.list():
+        containerCache[inst.name] = inst
+    print('container instances have been cached') 
+
+    hoststr = ''
+    for host in targetHosts:
+        hoststr += 'root@' + host + ' '
+    cmd = "deploy_service.py --repo-deploy-plan {} --hosts {} --application {}".format(
+        repoDeployPlanFilePath, hoststr, application
+    )
+    if services is not None or len(services) != 0:
+        cmd = "{} --services {}".format(cmd, ' '.join(services))
+    if tags is not None or len(tags) != 0:
+        cmd = "{} --tags {}".format(cmd, ' '.join(tags))
+    
+    if initParamFile is not None:
+        exec_cmd(repoHost, 'mkdir -p {}/deployments'.format(workdir), ignoreCmdErr = ignoreCmdErr)
+        targetFileName = '{}/deployments/initParams_{}_{}.json'.format(workdir, application, time.time())
+        copy_to_container(containerCache[repoHost], initParamFile, targetFileName)
+        cmd = "{} --init-parameters {}".format(cmd, targetFileName)
+    if providerSettingsFile is not None:
+        exec_cmd(repoHost, 'mkdir -p {}/deployments'.format(workdir), ignoreCmdErr = ignoreCmdErr)
+        targetFileName = '{}/deployments/providerSettings_{}_{}.json'.format(workdir, application, time.time())
+        copy_to_container(containerCache[repoHost], providerSettingsFile, targetFileName)
+        cmd = "{} --providers {}".format(cmd, targetFileName)
+    
+    environment = env
+    if env is None:
+        environment = ['PATH=./node_modules/.bin', 'PATH=./bin']
+    exec_cmd(
+        repoHost, 
+        cmd, 
+        ignoreCmdErr = ignoreCmdErr, 
+        workdir = workdir,
+        environment = environment
+    )
+
 # Executed from command line
 if __name__ == "__main__":
     import argparse
@@ -126,6 +182,38 @@ if __name__ == "__main__":
         type=str,
         required=False,
         help="hostname of the container to perform action, seperated by space"
+    )
+    argParser.add_argument(
+        "--application",
+        type=str,
+        required=False,
+        help="application to be deployed if action = 'deploy-services"
+    )
+    argParser.add_argument(
+        "--services",
+        nargs="+",
+        type=str,
+        required=False,
+        help="services to be deployed if action = 'deploy-services"
+    )
+    argParser.add_argument(
+        "--tags",
+        nargs="+",
+        type=str,
+        required=False,
+        help="tags of the services to be deployed if action = 'deploy-services"
+    )
+    argParser.add_argument(
+        "--init-parameters",
+        type=str,
+        required=False,
+        help="a json file containing the initialization parameters of the services to be deployed if action = 'deploy-services"
+    )
+    argParser.add_argument(
+        "--provider-settings",
+        type=str,
+        required=False,
+        help="a json file containing the initialization parameters of the services to be deployed if action = 'deploy-services"
     )
     argParser.add_argument(
         "--workdir",
@@ -158,17 +246,36 @@ if __name__ == "__main__":
 
     if args.action == "deploy-repo":
         if not args.repo_host:
-            print("--repo_host is required")
+            print("--repo-host is required")
             sys.exit(1)
         deploy_repository(args.repo_host, args.repo_deploy_plan, args.workdir, ignoreCmdErr = args.ignoreCmdErr)
     elif args.action == "deploy-agents":
         if not args.repo_host:
-            print("--repo_host is required")
+            print("--repo-host is required")
             sys.exit(1)
         if args.hosts:
             for host in args.hosts:
                 deploy_agent(host, args.repo_host, args.workdir, ignoreCmdErr = args.ignoreCmdErr)
             print("all agents have been deployed")
+    elif args.action == 'deploy-services':
+        if not args.application:
+            print("--application is required")
+            sys.exit(1)
+        else:
+            deploy_service(
+                args.repo_deploy_plan, 
+                args.repo_host, 
+                args.hosts, 
+                args.application, 
+                args.services, 
+                args.tags, 
+                args.provider_settings,
+                args.init_parameters,
+                args.ignoreCmdErr,
+                args.workdir,
+                args.env
+            )
+            print("services have been deployed on hosts [{}]".format(' '.join(args.hosts)))
     elif args.action == "exec-cmd":
         if args.cmd and args.hosts:
             for host in args.hosts:

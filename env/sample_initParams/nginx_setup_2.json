@@ -1,0 +1,8 @@
+{
+	"ipaddr": "0.0.0.0",
+	"port": 80,
+	"auth": {
+		"user": "sardines",
+		"password": "Sardines@2020"
+	}
+}

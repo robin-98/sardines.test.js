@@ -58,7 +58,7 @@ def copy_to_container(container, src:str = None, dst:str = None, filterList = No
             os.remove(tarfilename)
 
 
-def setup_ssh(container)-> str:
+def setup_ssh(container):
     """Setup ssh for the container instance, and return the public key
     """
     if container is None:
@@ -91,7 +91,7 @@ def setup_ssh(container)-> str:
         print(output.decode("utf8"))
         raise Exception('failed to setup ssh for the container [{}]'.format(container.name))
 
-def get_ssh_pub_key(container)->str:
+def get_ssh_pub_key(container):
     """get public key of the container
     """
     if container is None:
@@ -183,7 +183,7 @@ def build_ssh_trust_relationships(configList:list = None,  hosts:list = None, ss
         os.remove(tmpHostkeyFile)
         print("ssh trust relationships have been setup")
 
-def get_existing_env_variables(container)->dict:
+def get_existing_env_variables(container):
     if container is None:
         return []
 
