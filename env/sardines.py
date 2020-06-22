@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # Example of deploy service:
-# ./sardines.py --action deploy-services --repo-host nw-test-repo-1 --repo-deploy-plan deploy-repository.json --hosts nw-test-nginx-1 --application sardines-built-in-services --services /access_point/nginx:setup --init-parameters ./sample_initParams/nginx_setup.json --tags test nginx
+# ./sardines.py --action deploy-services --repo-host nw-test-repo-1 --repo-deploy-plan deploy-repository.json --hosts nw-test-nginx-1 --application sardines-built-in-services --services /access_point/nginx:* --init-parameters ./sample_initParams/nginx_setup.json --tags test nginx
 #
 
 import docker

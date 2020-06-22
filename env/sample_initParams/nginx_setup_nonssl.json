@@ -1,0 +1,17 @@
+[{
+  "service": {
+      "module": "/access_point/nginx",
+      "name": "setup"
+  },
+  "arguments": [
+		{
+			"error_log": "/logs/error.log",
+			"access_log": "/logs/access.log"
+		},
+		"/etc/nginx/nginx.conf",
+		"/etc/nginx/conf.d/",
+		"",
+		""
+	]
+
+}]
