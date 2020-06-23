@@ -154,6 +154,80 @@ def deploy_service(
         environment = environment
     )
 
+def remove_service_runtimes(
+    repoDeployPlanFilePath: str = 'deploy-repository.json',
+    repoHost: str = None,
+    targetHosts: list = None,
+    application: str = None,
+    services: list = None,
+    tags: list = None,
+    ignoreCmdErr: bool = False,
+    workdir: str = '/sardines/shoal',
+    env: list = None,
+    ):
+    hoststr = '*'
+    if targetHosts is not None and len(targetHosts) > 0:
+        hoststr = ''
+        for host in targetHosts:
+            hoststr += 'root@' + host + ','
+        hoststr = hoststr[0:-1]
+    
+    appstr = "*"
+    if application is not None and application != "*":
+        appstr = application
+    
+    versionDict = {}
+    if services is not None and len(services) > 0:
+        for service in services:
+            parts = service.split(':')[0]
+            if len(parts) < 2:
+                continue
+            version = "*"
+            if len(parts) > 2:
+                version = parts[2]
+            if version not in versionDict:
+                versionDict[version] = {}
+            moduleDict = versionDict[version]
+            moduleName = parts[0]
+            if moduleName not in moduleDict:
+                moduleDict[moduleName] = []
+            moduleServiceList = moduleDict[moduleName]
+            if parts[1] != '*' and parts[1] not in moduleServiceList:
+                moduleServiceList.append(parts[1])
+    
+    if len(versionDict.keys()) == 0:
+        versionDict['*'] = {}
+    
+    for version in versionDict.keys():
+        moduleDict = versionDict[version]
+        if len(moduleDict.keys()) == 0:
+            moduleDict["*"] = []
+        for module in moduleDict.keys():
+            moduleServiceList = moduleDict[module]
+            cmd = './lib/manager/manageRepository.js --remove-service-runtimes --applications={}'.format(appstr)
+            if module != '*':
+                cmd = '{} --modules={}'.format(cmd, module)
+            if version != "*":
+                cmd = '{} --versions={}'.format(cmd, version)
+            if len(moduleServiceList) > 0:
+                cmd = '{} --services={}'.format(cmd, ','.join(moduleServiceList))
+            if tags is not None and len(tags) > 0:
+                cmd = '{} --tags={}'.format(cmd, ','.join(tags))
+            if hoststr != '*':
+                cmd = '{} --hosts={}'.format(cmd, hoststr)
+            cmd = '{} {}'.format(cmd, repoDeployPlanFilePath)
+            environment = env
+            if env is None:
+                environment = ['PATH=./node_modules/.bin', 'PATH=./bin']
+            print('removing service runtimes using command:', cmd)
+            exec_cmd(
+                repoHost, 
+                cmd, 
+                ignoreCmdErr = ignoreCmdErr, 
+                workdir = workdir,
+                environment = environment
+            )
+
 # Executed from command line
 if __name__ == "__main__":
     import argparse
@@ -162,12 +236,13 @@ if __name__ == "__main__":
         "--action",
         type=str,
         required=True,
-        help="action to perform: deploy-repo, deploy-agents, deploy-services, exec-cmd"
+        help="action to perform: deploy-repo, deploy-agents, deploy-services, exec-cmd, remove-service-runtimes"
     )
     argParser.add_argument(
         "--repo-deploy-plan",
         type=str,
         required=False,
+        default="deploy-repository.json",
         help="deploy plan file path for a repository to deploy"
     )
     argParser.add_argument(
@@ -187,30 +262,30 @@ if __name__ == "__main__":
         "--application",
         type=str,
         required=False,
-        help="application to be deployed if action = 'deploy-services"
+        help="application to be deployed if action = 'deploy-services' or action = 'remove-services'"
     )
     argParser.add_argument(
         "--services",
         nargs="+",
         type=str,
         required=False,
-        help="services to be deployed if action = 'deploy-services"
+        help="services to be deployed if action = 'deploy-services' or action = 'remove-services'"
     )
     argParser.add_argument(
         "--tags",
         nargs="+",
         type=str,
         required=False,
-        help="tags of the services to be deployed if action = 'deploy-services"
+        help="tags of the services to be deployed if action = 'deploy-services' or action = 'remove-services'" 
     )
     argParser.add_argument(
-        "--init-parameters",
+        "--init-parameters-file",
         type=str,
         required=False,
         help="a json file containing the initialization parameters of the services to be deployed if action = 'deploy-services"
     )
     argParser.add_argument(
-        "--provider-settings",
+        "--provider-settings-file",
         type=str,
         required=False,
         help="a json file containing the initialization parameters of the services to be deployed if action = 'deploy-services"
@@ -269,13 +344,25 @@ if __name__ == "__main__":
                 args.application, 
                 args.services, 
                 args.tags, 
-                args.provider_settings,
-                args.init_parameters,
+                args.provider_settings_file,
+                args.init_parameters_file,
                 args.ignoreCmdErr,
                 args.workdir,
                 args.env
             )
             print("services have been deployed on hosts [{}]".format(' '.join(args.hosts)))
+    elif args.action == 'remove-service-runtimes':
+        remove_service_runtimes(
+            args.repo_deploy_plan, 
+            args.repo_host, 
+            args.hosts, 
+            args.application, 
+            args.services, 
+            args.tags, 
+            args.ignoreCmdErr,
+            args.workdir,
+            args.env
+        )
     elif args.action == "exec-cmd":
         if args.cmd and args.hosts:
             for host in args.hosts:
