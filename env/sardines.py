@@ -129,7 +129,7 @@ def deploy_service(
     )
     if services is not None or len(services) != 0:
         cmd = "{} --services {}".format(cmd, ' '.join(services))
-    if tags is not None or len(tags) != 0:
+    if tags is not None and len(tags) != 0:
         cmd = "{} --tags {}".format(cmd, ' '.join(tags))
     
     if initParamFile is not None:
